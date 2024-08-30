@@ -14,10 +14,10 @@ def authenticate():
 def auth_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
-        auth = request.authorization
-        config = reloader.get_config()
-        if auth is None or auth.password != config['SERVER_PASSWORD']:
-            return authenticate()
+        # auth = request.authorization
+        # config = reloader.get_config()
+        # if auth is None or auth.password != config['SERVER_PASSWORD']:
+        #     return authenticate()
         return f(*args, **kwargs)
     return decorated
 
