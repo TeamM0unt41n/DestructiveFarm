@@ -1,3 +1,5 @@
+import os
+
 CONFIG = {
     # Don't forget to remove the old database (flags.sqlite) before each competition.
 
@@ -38,6 +40,6 @@ CONFIG = {
     'SERVER_PASSWORD': '1234',
 
     # Use authorization for API requests
-    'ENABLE_API_AUTH': False,
-    'API_TOKEN': '00000000000000000000'
+    'ENABLE_API_AUTH': True,
+    'API_TOKEN': os.environ.get('FARM_TOKEN')
 }
