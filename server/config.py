@@ -1,5 +1,7 @@
 import os
 
+TEAMS = ['cybersecnatlab', 'albania', 'australia', 'austria', 'belgium', 'bulgaria', 'canada', 'chile', 'costa-rica', 'croatia', 'cyprus', 'czech', 'denmark', 'estonia', 'finland', 'france', 'georgia', 'germany', 'greece', 'hungary', 'iceland', 'ireland', 'italy', 'kosovo', 'latvia', 'liechtenstein', 'luxembourg', 'malta', 'netherlands', 'norway', 'poland', 'portugal', 'romania', 'serbia', 'slovakia', 'slovenia', 'spain', 'sweden', 'switzerland', 'usa', 'cyprus2', 'denmark2', 'usa2', ]
+
 CONFIG = {
     # Don't forget to remove the old database (flags.sqlite) before each competition.
 
@@ -12,8 +14,9 @@ CONFIG = {
     # This configures how and where to submit flags.
     # The protocol must be a module in protocols/ directory.
 
+    'SYSTEM_TOKEN':'12ad1db9850dc371b36f9f105661f47c',
     'SYSTEM_PROTOCOL': 'ructf_http',
-    'SYSTEM_HOST': '10.10.0.1',
+    'SYSTEM_URL': 'http://10.10.0.1:8080/flags',
     'SYSTEM_PORT': 8080,
 
     # 'SYSTEM_PROTOCOL': 'ructf_http',
