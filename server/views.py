@@ -40,6 +40,7 @@ FLAGS_PER_PAGE = 30
 @app.route('/ui/show_flags', methods=['POST'])
 @auth.auth_required
 def show_flags():
+    print('show')
     conditions = []
     for column in ['sploit', 'status', 'team']:
         value = request.form[column]
@@ -92,6 +93,8 @@ def post_flags_manual():
     cur_time = round(time.time())
     rows = [(item, 'Manual', '*', cur_time, FlagStatus.QUEUED.name)
             for item in flags]
+
+    print(rows)
 
     db = database.get()
     db.executemany("INSERT OR IGNORE INTO flags (flag, sploit, team, time, status) "
