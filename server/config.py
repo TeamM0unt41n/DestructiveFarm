@@ -1,14 +1,15 @@
 import os
 
-TEAMS = ['cybersecnatlab', 'albania', 'australia', 'austria', 'belgium', 'bulgaria', 'canada', 'chile', 'costa-rica', 'croatia', 'cyprus', 'czech', 'denmark', 'estonia', 'finland', 'france', 'georgia', 'germany', 'greece', 'hungary', 'iceland', 'ireland', 'italy', 'kosovo', 'latvia', 'liechtenstein', 'luxembourg', 'malta', 'netherlands', 'norway', 'poland', 'portugal', 'romania', 'serbia', 'slovakia', 'slovenia', 'spain', 'sweden', 'switzerland', 'usa', 'cyprus2', 'denmark2', 'usa2', ]
+#TEAMS = ['cybersecnatlab', 'albania', 'australia', 'austria', 'belgium', 'bulgaria', 'canada', 'chile', 'costa-rica', 'croatia', 'cyprus', 'czech', 'denmark', 'estonia', 'finland', 'france', 'georgia', 'germany', 'greece', 'hungary', 'iceland', 'ireland', 'italy', 'kosovo', 'latvia', 'liechtenstein', 'luxembourg', 'malta', 'netherlands', 'norway', 'poland', 'portugal', 'romania', 'serbia', 'slovakia', 'slovenia', 'spain', 'sweden', 'switzerland', 'usa', 'cyprus2', 'denmark2', 'usa2', ]
+TEAMS = ["cybersecnatlab", "europe", "albania", "austria", "belgium", "bulgaria", "croatia", "cyprus", "czech", "denmark", "estonia", "finland", "france", "georgia", "germany", "greece", "hungary", "iceland", "ireland", "italy", "latvia", "liechtenstein", "luxembourg", "malta", "netherlands", "norway", "poland", "portugal", "romania", "serbia", "slovakia", "slovenia", "spain", "sweden", "switzerland"]
 
 CONFIG = {
     # Don't forget to remove the old database (flags.sqlite) before each competition.
 
     # The clients will run sploits on TEAMS and
     # fetch FLAG_FORMAT from sploits' stdout.
-    'TEAMS': {'Team #{}'.format(i): '10.0.0.{}'.format(i)
-              for i in range(1, 29 + 1)},
+    'TEAMS': {TEAMS[i-1]: '10.62.{}.1'.format(i)
+              for i in range(1, len(TEAMS) + 1)},
     'FLAG_FORMAT': r'[A-Z0-9]{31}=',
 
     # This configures how and where to submit flags.

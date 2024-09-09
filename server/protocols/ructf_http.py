@@ -5,10 +5,10 @@ from server.models import FlagStatus, SubmitResult
 
 
 RESPONSES = {
-    FlagStatus.QUEUED: ['timeout', 'game not started', 'try again later', 'game over', 'is not up',
+    FlagStatus.QUEUED: ['timeout', 'game not started', 'retry later', 'game over', 'is not active yet', 'is not up',
                         'no such flag'],
     FlagStatus.ACCEPTED: ['accepted', 'congrat'],
-    FlagStatus.REJECTED: ['bad', 'wrong', 'expired', 'unknown', 'your own', "flag already claimed",
+    FlagStatus.REJECTED: ['bad', 'wrong', 'expired', 'denied', 'unknown', 'your own', "flag already claimed",
                           'too old', 'not in database', 'already submitted', 'invalid flag'],
 }
 # The RuCTF checksystem adds a signature to all correct flags. It returns
