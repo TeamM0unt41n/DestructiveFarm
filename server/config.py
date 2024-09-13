@@ -16,7 +16,7 @@ CONFIG = {
     # The protocol must be a module in protocols/ directory.
 
     'SYSTEM_TOKEN':'12ad1db9850dc371b36f9f105661f47c',
-    'SYSTEM_PROTOCOL': 'ructf_http',
+    'SYSTEM_PROTOCOL': 'ecsc24_http',
     'SYSTEM_URL': 'http://10.10.0.1:8080/flags',
     'SYSTEM_PORT': 8080,
 
