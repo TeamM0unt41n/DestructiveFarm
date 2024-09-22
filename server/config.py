@@ -20,6 +20,8 @@ CONFIG = {
     'SYSTEM_URL': 'http://10.10.0.1:8080/flags',
     'SYSTEM_PORT': 8080,
 
+    'STRATEGY_ENDPOINT' : 'http://api:8000/strategy/teams/'
+
     # 'SYSTEM_PROTOCOL': 'ructf_http',
     # 'SYSTEM_URL': 'http://monitor.ructfe.org/flags',
     # 'SYSTEM_TOKEN': 'your_secret_token',
