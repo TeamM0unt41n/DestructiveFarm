@@ -6,6 +6,8 @@ from server import app, auth, database, reloader
 from server.models import FlagStatus
 from server.spam import is_spam_flag
 
+from server.reloader import _config_mtime, get_config
+
 
 @app.route('/api/get_config')
 @auth.api_auth_required
@@ -31,3 +33,9 @@ def post_flags():
     db.commit()
 
     return ''
+
+@app.route('/api/reload_config', methods=['POST'])
+@auth.api_auth_required
+def request_config_reload():
+    reloader.load_config()
+    return 'success'

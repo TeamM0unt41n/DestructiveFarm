@@ -19,6 +19,14 @@ config_module = importlib.util.module_from_spec(config_spec)
 config_spec.loader.exec_module(config_module)
 _cur_config = config_module.CONFIG
 
+def load_config():
+    global _cur_config
+    try:
+        config_spec.loader.exec_module(config_module)
+        _cur_config = config_module.CONFIG
+        app.logger.info('New config loaded')
+    except Exception as e:
+        app.logger.error('Failed to reload config: %s', e)
 
 def get_config():
     """
@@ -37,12 +45,7 @@ def get_config():
     if cur_mtime != _config_mtime:
         with _reload_lock:
             if cur_mtime != _config_mtime:
-                try:
-                    config_spec.loader.exec_module(config_module)
-                    _cur_config = config_module.CONFIG
-                    app.logger.info('New config loaded')
-                except Exception as e:
-                    app.logger.error('Failed to reload config: %s', e)
+                load_config()
 
                 _config_mtime = cur_mtime
 

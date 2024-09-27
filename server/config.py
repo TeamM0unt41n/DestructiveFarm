@@ -1,6 +1,8 @@
 import os
+import requests
 
-#TEAMS = ['cybersecnatlab', 'albania', 'australia', 'austria', 'belgium', 'bulgaria', 'canada', 'chile', 'costa-rica', 'croatia', 'cyprus', 'czech', 'denmark', 'estonia', 'finland', 'france', 'georgia', 'germany', 'greece', 'hungary', 'iceland', 'ireland', 'italy', 'kosovo', 'latvia', 'liechtenstein', 'luxembourg', 'malta', 'netherlands', 'norway', 'poland', 'portugal', 'romania', 'serbia', 'slovakia', 'slovenia', 'spain', 'sweden', 'switzerland', 'usa', 'cyprus2', 'denmark2', 'usa2', ]
+# This file will try to load a config from the novara remote, if it fails it will fallback to the config in this file
+
 TEAMS = ["cybersecnatlab", "europe", "albania", "austria", "belgium", "bulgaria", "croatia", "cyprus", "czech", "denmark", "estonia", "finland", "france", "georgia", "germany", "greece", "hungary", "iceland", "ireland", "italy", "latvia", "liechtenstein", "luxembourg", "malta", "netherlands", "norway", "poland", "portugal", "romania", "serbia", "slovakia", "slovenia", "spain", "sweden", "switzerland"]
 
 CONFIG = {
@@ -47,3 +49,15 @@ CONFIG = {
     'ENABLE_API_AUTH': True,
     'API_TOKEN': os.environ.get('FARM_TOKEN')
 }
+
+print('requesting config')
+
+try:
+    r = requests.get('http://api:8000/config/farm/')
+    if not r.ok:
+        raise Exception
+    
+    CONFIG = r.json()
+    print('loaded new config')
+except:
+    print('failed loading config from remote falling back to local values')
