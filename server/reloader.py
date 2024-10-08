@@ -1,52 +1,87 @@
-import importlib
 import os
 import threading
-import importlib.util
+import warnings
 
-from server import app
-
-
-_config_mtime = None
-_reload_lock = threading.RLock()
+from dataclasses import dataclass, asdict
+import yaml
+from watchfiles import watch
 
 if "CONFIG" in os.environ:
-    config_path = os.environ["CONFIG"]
+    CONFIG_PATH = os.environ["CONFIG"]
 else:
-    config_path = os.path.join(app.root_path, 'config.py')
+    CONFIG_PATH = os.path.join(os.path.dirname(__file__), 'config.yaml')
 
-config_spec = importlib.util.spec_from_file_location("server.config", config_path)
-config_module = importlib.util.module_from_spec(config_spec)
-config_spec.loader.exec_module(config_module)
-_cur_config = config_module.CONFIG
+@dataclass
+class Config:
+    TEAMS:dict[str, str]
+    FLAG_FORMAT:str
 
-def load_config():
-    global _cur_config
-    try:
-        config_spec.loader.exec_module(config_module)
-        _cur_config = config_module.CONFIG
-        app.logger.info('New config loaded')
-    except Exception as e:
-        app.logger.error('Failed to reload config: %s', e)
+    SYSTEM_TOKEN:str
+    SYSTEM_PROTOCOL:str = None
+    SYSTEM_URL:str = None
+    SYSTEM_PORT:int = None
+    SYSTEM_HOST: str = None  
+    TEAM_TOKEN:str = None
 
-def get_config():
-    """
-    Returns CONFIG dictionary from config.py module.
+    SUBMIT_FLAG_LIMIT: int
+    SUBMIT_PERIOD: int
+    FLAG_LIFETIME: int
 
-    If config.py file was updated since the last call, get_config() reloads
-    the dictionary. If an error happens during reloading, get_config() returns
-    the old dictionary.
+    SERVER_PASSWORD:str
 
-    :returns: the newest valid version of the CONFIG dictionary
-    """
+    ENABLE_API_AUTH:bool
+    API_TOKEN:str 
 
-    global _config_mtime, _cur_config
+@dataclass
+class Config_manager(Config):
+    is_initialized = False
+    def __init__(self):
+        self._load()
+        self.observer_thread = threading.Thread(target=self.watch_for_changes, daemon=True)
+        self.observer_thread.start()
+        self.is_initialized = True
+        
+    def watch_for_changes(self):
+        for _ in watch(CONFIG_PATH):
+            print('hot reloading config...')
+            self._load()
 
-    cur_mtime = os.stat(config_path).st_mtime_ns
-    if cur_mtime != _config_mtime:
-        with _reload_lock:
-            if cur_mtime != _config_mtime:
-                load_config()
+    def _load(self):
+        with open(CONFIG_PATH, 'r') as config_file:
+            self.raw_config = yaml.safe_load(config_file)
+        print('new config loaded')
+    
+    # def __setattr__(self, name: str, value: None) -> None:
+    #     if name in Config.__dataclass_fields__ and self.is_initialized:
+    #         self.save()
+    #     return super().__setattr__(name, value)
+    
+    def raw_write(self, config:dict):
+        with open(CONFIG_PATH, 'w') as config_file:
+            yaml.dump(config, config_file)
 
-                _config_mtime = cur_mtime
+    def save(self):
+        self.raw_write(self.raw_config)
 
-    return _cur_config
+    @property
+    def raw_config(self):
+        """access the config as a dict"""
+        return {k:v for k, v in asdict(self).items() if k in Config.__dataclass_fields__}
+    
+    def validate_config(self, config:dict):
+        for key in config.keys():
+            if not key in Config.__dataclass_fields__:
+                raise Exception(f'key {key} not found')
+        
+        for key in Config.__dataclass_fields__:
+            if not key in config:
+                warnings.warn(f'additional key {key} found in new config')    
+
+    @raw_config.setter
+    def raw_config(self, value:dict):
+        self.validate_config(value)
+        if self.is_initialized:
+            value = self.raw_config | value
+        super().__init__(**value)
+
+config = Config_manager()
