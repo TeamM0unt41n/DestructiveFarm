@@ -1,14 +1,14 @@
 import socket
 
 from server import app
-from server.models import FlagStatus, SubmitResult
+from server.models import Flag_Status, SubmitResult
 
 
 RESPONSES = {
-    FlagStatus.QUEUED: ['timeout', 'game not started', 'try again later', 'game over', 'is not up',
+    Flag_Status.QUEUED: ['timeout', 'game not started', 'try again later', 'game over', 'is not up',
                         'no such flag'],
-    FlagStatus.ACCEPTED: ['accepted', 'congrat'],
-    FlagStatus.REJECTED: ['bad', 'wrong', 'expired', 'unknown', 'your own',
+    Flag_Status.ACCEPTED: ['accepted', 'congrat'],
+    Flag_Status.REJECTED: ['bad', 'wrong', 'expired', 'unknown', 'your own',
                           'too old', 'not in database', 'already submitted', 'invalid flag'],
 }
 # The RuCTF checksystem adds a signature to all correct flags. It returns
@@ -64,7 +64,7 @@ def submit_flags(flags, config):
                 found_status = status
                 break
         else:
-            found_status = FlagStatus.QUEUED
+            found_status = Flag_Status.QUEUED
             if response not in unknown_responses:
                 unknown_responses.add(response)
                 app.logger.warning('Unknown checksystem response (flag will be resent): %s', response)

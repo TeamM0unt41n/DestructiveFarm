@@ -2,27 +2,34 @@ import re
 import time
 from datetime import datetime
 
-from flask import jsonify, render_template, request
 from pymongo import DESCENDING, MongoClient
 
-from server import app, auth, database, reloader
-from server.models import FlagStatus
+from fastapi import APIRouter, Request, Form
+from fastapi.responses import JSONResponse
+
+from server.models import Flag_Status
 from server.reloader import config
 from os import environ
+
+from typing import Annotated, Optional
+
+from fastapi.templating import Jinja2Templates
+
+tempates = Jinja2Templates('templates')
 
 PASSWORD = environ.get("MONGO_ROOT_PASSWORD", "password")
 
 client = MongoClient(host="novara-mongo", port=27017, username="root", password=PASSWORD)
 db = client.get_database("db")
 
-@app.template_filter('timestamp_to_datetime')
+view_router = APIRouter()
+
+@view_router.template_filter('timestamp_to_datetime')
 def timestamp_to_datetime(s):
     return datetime.fromtimestamp(s)
 
-
-@app.route('/')
-@auth.auth_required
-def index():
+@view_router.route('/')
+def index(request:Request):
     distinct_values = {}
 
     for column in ['sploit', 'status', 'team']:
@@ -32,30 +39,40 @@ def index():
     if server_tz_name.startswith('+'):
         server_tz_name = 'UTC' + server_tz_name
 
-    return render_template('index.html',
-                           flag_format=config.FLAG_FORMAT,
-                           distinct_values=distinct_values,
-                           server_tz_name=server_tz_name)
+    return tempates.TemplateResponse(request=request, name='index.html',
+                                     context={'flag_format':config.FLAG_FORMAT,
+                                              'distinct_values':distinct_values,
+                                              'server_tz_name':server_tz_name})
 
 
 FORM_DATETIME_FORMAT = '%Y-%m-%d %H:%M'
-FLAGS_PER_PAGE = 30
 
-
-@app.route('/ui/show_flags', methods=['POST'])
-@auth.auth_required
-def show_flags():    
+@view_router.post('/ui/show_flags')
+async def show_flags(
+        request:Request,
+        page_number:Optional[Annotated[int, Form()]] = None, 
+        time_since:Optional[Annotated[str, Form()]] = None, 
+        time_until:Optional[Annotated[str, Form()]] = None, 
+        checksystem_response:Optional[Annotated[str, Form()]] = None, 
+        flag:Optional[Annotated[str, Form()]] = None, 
+        team:Optional[Annotated[str, Form()]] = None, 
+        status:Optional[Annotated[str, Form()]] = None, 
+        sploit:Optional[Annotated[str, Form()]] = None, 
+        flags_per_page:int = 30
+        ):    
     query = {}
+
+    form_data = await request.form()
 
     # Filter by sploit, status, and team
     for column in ['sploit', 'status', 'team']:
-        value = request.form[column]
+        value = form_data[column]
         if value:
             query[column] = value
 
     # Filter by flag and checksystem_response (using case-insensitive search)
     for column in ['flag', 'checksystem_response']:
-        value = request.form[column]
+        value = form_data[column]
         if value:
             query[column] = {'$regex': value.lower(), '$options': 'i'}
 
@@ -74,26 +91,25 @@ def show_flags():
     if page_number < 1:
         raise ValueError('Invalid page-number')
 
-    skip = FLAGS_PER_PAGE * (page_number - 1)
+    skip = flags_per_page * (page_number - 1)
     
     # Retrieve flags with pagination and sorting by time (descending)
-    flags = list(db.flags.find(query).sort('time', DESCENDING).skip(skip).limit(FLAGS_PER_PAGE))
+    flags = list(db.flags.find(query).sort('time', DESCENDING).skip(skip).limit(flags_per_page))
 
     # Get total count for pagination
     total_count = db.flags.count_documents(query)
 
-    return jsonify({
+    return JSONResponse({
         'rows': [dict(item) for item in flags],
-        'rows_per_page': FLAGS_PER_PAGE,
+        'rows_per_page': flags_per_page,
         'total_count': total_count,
     })
 
 
-@app.route('/ui/post_flags_manual', methods=['POST'])
-@auth.auth_required
-def post_flags_manual():    
+@view_router.route('/ui/post_flags_manual', methods=['POST'])
+def post_flags_manual(text:Annotated[str, Form()]):    
     # Extract flags from the provided text
-    flags = re.findall(config.FLAG_FORMAT, request.form['text'])
+    flags = re.findall(config.FLAG_FORMAT, text)
 
     cur_time = round(time.time())
     rows = [{
@@ -101,7 +117,7 @@ def post_flags_manual():
         'sploit': 'Manual',
         'team': '*',
         'time': cur_time,
-        'status': FlagStatus.QUEUED.name
+        'status': Flag_Status.QUEUED.name
     } for item in flags]
 
     # Use bulk operations to insert flags, ignoring duplicates

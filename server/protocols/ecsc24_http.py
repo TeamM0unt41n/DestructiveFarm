@@ -1,14 +1,14 @@
 import requests
 
 from server import app
-from server.models import FlagStatus, SubmitResult
+from server.models import Flag_Status, SubmitResult
 
 
 RESPONSES = {
-    FlagStatus.QUEUED: ['timeout', 'game not started', 'retry later', 'game over', 'is not active yet', 'is not up',
+    Flag_Status.QUEUED: ['timeout', 'game not started', 'retry later', 'game over', 'is not active yet', 'is not up',
                         'no such flag'],
-    FlagStatus.ACCEPTED: ['accepted', 'congrat'],
-    FlagStatus.REJECTED: ['bad', 'wrong', 'expired', 'denied', 'unknown', 'your own', "flag already claimed",
+    Flag_Status.ACCEPTED: ['accepted', 'congrat'],
+    Flag_Status.REJECTED: ['bad', 'wrong', 'expired', 'denied', 'unknown', 'your own', "flag already claimed",
                           'too old', 'not in database', 'already submitted', 'invalid flag'],
 }
 # The RuCTF checksystem adds a signature to all correct flags. It returns
@@ -31,7 +31,7 @@ def submit_flags(flags, config):
     resp_json = r.json()
     if "message" in resp_json:
         for flag in flags:
-            yield SubmitResult(flag, FlagStatus.QUEUED, "Ratelimit")
+            yield SubmitResult(flag, Flag_Status.QUEUED, "Ratelimit")
     else:
         for item in resp_json:
             response = item['msg'].strip()
@@ -43,7 +43,7 @@ def submit_flags(flags, config):
                     found_status = status
                     break
             else:
-                found_status = FlagStatus.QUEUED
+                found_status = Flag_Status.QUEUED
                 if response not in unknown_responses:
                     unknown_responses.add(response)
                     app.logger.warning('Unknown checksystem response (flag will be resent): %s', response)

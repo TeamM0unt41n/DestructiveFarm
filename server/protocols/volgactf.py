@@ -1,12 +1,12 @@
 from themis.finals.attack.helper import Helper
 from themis.finals.attack.result import Result
 
-from server.models import FlagStatus, SubmitResult
+from server.models import Flag_Status, SubmitResult
 
 
 RESPONSES = {
-    FlagStatus.ACCEPTED: [Result.SUCCESS_FLAG_ACCEPTED],
-    FlagStatus.REJECTED: [Result.ERROR_FLAG_EXPIRED, Result.ERROR_FLAG_YOURS,
+    Flag_Status.ACCEPTED: [Result.SUCCESS_FLAG_ACCEPTED],
+    Flag_Status.REJECTED: [Result.ERROR_FLAG_EXPIRED, Result.ERROR_FLAG_YOURS,
                           Result.ERROR_FLAG_SUBMITTED, Result.ERROR_FLAG_NOT_FOUND],
 }
 
@@ -21,6 +21,6 @@ def submit_flags(flags, config):
                 found_status = status
                 break
         else:
-            found_status = FlagStatus.QUEUED
+            found_status = Flag_Status.QUEUED
 
         yield SubmitResult(item.flag, found_status, code.name)

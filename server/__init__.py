@@ -1,16 +1,14 @@
-import logging
-from flask import Flask
-from werkzeug.middleware.proxy_fix import ProxyFix
+from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
+from fastapi.middleware.cors import CORSMiddleware
+from server.api import client_router
+from server.views import view_router
 
-app = Flask(__name__)
+app = FastAPI()
 
-# Configure the logger
-app.logger.setLevel(logging.DEBUG)
-for handler in app.logger.handlers:
-    handler.setLevel(logging.DEBUG)
+app.add_middleware(CORSMiddleware)
 
-# Trust proxy headers (adjust the values as needed)
-app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_port=1, x_prefix=1)
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
-import server.api
-import server.views
+app.include_router(client_router)
+app.include_router(view_router)

@@ -1,87 +1,55 @@
 import os
 import threading
-import warnings
-
-from dataclasses import dataclass, asdict
 import yaml
 from watchfiles import watch
+from typing import Union
+from server.models import Config_Model
 
 if "CONFIG" in os.environ:
     CONFIG_PATH = os.environ["CONFIG"]
 else:
     CONFIG_PATH = os.path.join(os.path.dirname(__file__), 'config.yaml')
 
-@dataclass
-class Config:
-    TEAMS:dict[str, str]
-    FLAG_FORMAT:str
+class ConfigManager(Config_Model):
+    is_initialized: bool = False
 
-    SYSTEM_TOKEN:str
-    SYSTEM_PROTOCOL:str = None
-    SYSTEM_URL:str = None
-    SYSTEM_PORT:int = None
-    SYSTEM_HOST: str = None  
-    TEAM_TOKEN:str = None
-
-    SUBMIT_FLAG_LIMIT: int
-    SUBMIT_PERIOD: int
-    FLAG_LIFETIME: int
-
-    SERVER_PASSWORD:str
-
-    ENABLE_API_AUTH:bool
-    API_TOKEN:str 
-
-@dataclass
-class Config_manager(Config):
-    is_initialized = False
     def __init__(self):
-        self._load()
+        super().__init__(**self._load())
         self.observer_thread = threading.Thread(target=self.watch_for_changes, daemon=True)
         self.observer_thread.start()
         self.is_initialized = True
-        
+
     def watch_for_changes(self):
         for _ in watch(CONFIG_PATH):
-            print('hot reloading config...')
+            print('Hot reloading config...')
             self._load()
 
     def _load(self):
         with open(CONFIG_PATH, 'r') as config_file:
-            self.raw_config = yaml.safe_load(config_file)
-        print('new config loaded')
+            data = yaml.safe_load(config_file)
+        print('New config loaded')
+        return data
     
-    # def __setattr__(self, name: str, value: None) -> None:
-    #     if name in Config.__dataclass_fields__ and self.is_initialized:
-    #         self.save()
-    #     return super().__setattr__(name, value)
-    
-    def raw_write(self, config:dict):
+    def raw_write(self, config: dict):
         with open(CONFIG_PATH, 'w') as config_file:
             yaml.dump(config, config_file)
 
     def save(self):
-        self.raw_write(self.raw_config)
+        self.raw_write(self.model_dump())
 
     @property
     def raw_config(self):
-        """access the config as a dict"""
-        return {k:v for k, v in asdict(self).items() if k in Config.__dataclass_fields__}
-    
-    def validate_config(self, config:dict):
-        for key in config.keys():
-            if not key in Config.__dataclass_fields__:
-                raise Exception(f'key {key} not found')
-        
-        for key in Config.__dataclass_fields__:
-            if not key in config:
-                warnings.warn(f'additional key {key} found in new config')    
+        """Access the config as a dict"""
+        return self.model_dump()
 
     @raw_config.setter
-    def raw_config(self, value:dict):
-        self.validate_config(value)
+    def raw_config(self, value: Union[dict, Config_Model]):
+        if isinstance(value, Config_Model):
+            value = value.model_dump()
+
         if self.is_initialized:
-            value = self.raw_config | value
+            value = {**self.model_dump(), **value}
+
         super().__init__(**value)
 
-config = Config_manager()
+config = ConfigManager()

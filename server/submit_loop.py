@@ -5,9 +5,17 @@ import random
 import time
 from collections import defaultdict
 
-from server import app, database, reloader
-from server.models import Flag, FlagStatus, SubmitResult
+from server import app, database
+from server.reloader import config
+from server.models import Flag, Flag_Status, SubmitResult
+from os import environ
+from pymongo import MongoClient
 
+
+PASSWORD = environ.get("MONGO_ROOT_PASSWORD", "password")
+
+client = MongoClient(host="novara-mongo", port=27017, username="root", password=PASSWORD)
+db = client.get_database("db")
 
 def get_fair_share(groups, limit):
     if not groups:
@@ -41,53 +49,77 @@ def get_fair_share(groups, limit):
     return result
 
 
-def submit_flags(flags, config):
-    module = importlib.import_module('server.protocols.' + config['SYSTEM_PROTOCOL'])
+def submit_flags(flags):
+    module = importlib.import_module('server.protocols.' + config.SYSTEM_PROTOCOL)
 
     try:
         return list(module.submit_flags(flags, config))
     except Exception as e:
         message = '{}: {}'.format(type(e).__name__, str(e))
         app.logger.exception('Exception on submitting flags')
-        return [SubmitResult(item.flag, FlagStatus.QUEUED, message) for item in flags]
+        return [SubmitResult(item.flag, Flag_Status.QUEUED, message) for item in flags]
 
 
 def run_loop():
     app.logger.info('Starting submit loop')
-    with app.app_context():
-        db = database.get(context_bound=False)
-
+    
     while True:
         submit_start_time = time.time()
 
-        config = reloader.get_config()
+        # Calculate skip_time
+        skip_time = round(submit_start_time - config.FLAG_LIFETIME)
 
-        skip_time = round(submit_start_time - config['FLAG_LIFETIME'])
-        db.execute("UPDATE flags SET status = ? WHERE status = ? AND time < ?",
-                   (FlagStatus.SKIPPED.name, FlagStatus.QUEUED.name, skip_time))
-        db.commit()
+        # Update flags where status is 'QUEUED' and time is less than skip_time
+        db['flags'].update_many(
+            {"status": Flag_Status.QUEUED.name, "time": {"$lt": skip_time}},
+            {"$set": {"status": Flag_Status.SKIPPED.name}}
+        )
 
-        cursor = db.execute("SELECT * FROM flags WHERE status = ?", (FlagStatus.QUEUED.name,))
-        queued_flags = [Flag(**item) for item in cursor.fetchall()]
+        # Query all flags where status is 'QUEUED'
+        queued_flags = list(db['flags'].find({"status": Flag_Status.QUEUED.name}))
+
+        # Convert MongoDB documents to Flag objects (assuming a Flag class exists)
+        queued_flags = [Flag(**item) for item in queued_flags]
 
         if queued_flags:
+            # Group flags by (sploit, team) using defaultdict
             grouped_flags = defaultdict(list)
             for item in queued_flags:
-                grouped_flags[item.sploit, item.team].append(item)
-            flags = get_fair_share(grouped_flags.values(), config['SUBMIT_FLAG_LIMIT'])
+                grouped_flags[(item.sploit, item.team)].append(item)
+
+            # Get fair share of flags, respecting the limit defined in config
+            flags = get_fair_share(grouped_flags.values(), config.SUBMIT_FLAG_LIMIT)
 
             app.logger.debug('Submitting %s flags (out of %s in queue)', len(flags), len(queued_flags))
-            results = submit_flags(flags, config)
 
-            rows = [(item.status.name, item.checksystem_response, item.flag) for item in results]
-            db.executemany("UPDATE flags SET status = ?, checksystem_response = ? "
-                           "WHERE flag = ?", rows)
-            db.commit()
+            # Submit flags and get results
+            results = submit_flags(flags)
 
+            # Prepare bulk update for MongoDB
+            bulk_updates = []
+            for result in results:
+                bulk_updates.append(
+                    {
+                        "update_one": {
+                            "filter": {"flag": result.flag},
+                            "update": {
+                                "$set": {
+                                    "status": result.status.name,
+                                    "checksystem_response": result.checksystem_response
+                                }
+                            }
+                        }
+                    }
+                )
+
+            # Execute bulk update in MongoDB
+            if bulk_updates:
+                db['flags'].bulk_write(bulk_updates)
+
+        # Calculate the time spent and sleep if necessary
         submit_spent = time.time() - submit_start_time
-        if config['SUBMIT_PERIOD'] > submit_spent:
-            time.sleep(config['SUBMIT_PERIOD'] - submit_spent)
-
+        if config.SUBMIT_PERIOD > submit_spent:
+            time.sleep(config.SUBMIT_PERIOD - submit_spent)
 
 if __name__ == "__main__":
     run_loop()
