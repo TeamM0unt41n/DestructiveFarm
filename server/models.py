@@ -19,6 +19,8 @@ class Config_Model(BaseModel):
     SYSTEM_PORT: Optional[int] = None
     SYSTEM_HOST: Optional[str] = None  
     TEAM_TOKEN: Optional[str] = None
+    TIMEZONE: Optional[str] = None
+    INFO_FLAG_LIMIT: Optional[int] = None
     SUBMIT_FLAG_LIMIT: int
     SUBMIT_PERIOD: int
     FLAG_LIFETIME: int
