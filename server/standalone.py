@@ -1,11 +1,9 @@
+import uvicorn
 import threading
-import werkzeug.serving
 
-
+from server import submit_loop
 from server import app
-import server.submit_loop
 
+threading.Thread(target=submit_loop.run_loop, daemon=True).start()
 
-if not werkzeug.serving.is_running_from_reloader():
-    threading.Thread(target=server.submit_loop.run_loop, daemon=True).start()
-    # FIXME: Don't use daemon=True, exit from the thread properly
+uvicorn.run(app)

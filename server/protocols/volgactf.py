@@ -12,7 +12,7 @@ RESPONSES = {
 
 
 def submit_flags(flags, config):
-    h = Helper(config['SYSTEM_HOST'])
+    h = Helper(config.SYSTEM_HOST)
     codes = h.attack(*[item.flag for item in flags])
 
     for item, code in zip(flags, codes):

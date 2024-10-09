@@ -43,7 +43,7 @@ def recvall(sock):
 
 
 def submit_flags(flags, config):
-    sock = socket.create_connection((config['SYSTEM_HOST'], config['SYSTEM_PORT']),
+    sock = socket.create_connection((config.SYSTEM_HOST, config.SYSTEM_PORT),
                                     READ_TIMEOUT)
 
     greeting = recvall(sock)

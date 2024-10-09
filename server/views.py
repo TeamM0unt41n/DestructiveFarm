@@ -1,26 +1,19 @@
 import re
 import time
-from datetime import datetime
 
-from pymongo import DESCENDING, MongoClient
+from datetime import datetime
+from pymongo import DESCENDING
+from typing import Annotated, Optional
 
 from fastapi import APIRouter, Request, Form
 from fastapi.responses import JSONResponse
+from fastapi.templating import Jinja2Templates
 
 from server.models import Flag_Status
 from server.reloader import config
-from os import environ
-
-from typing import Annotated, Optional
-
-from fastapi.templating import Jinja2Templates
+from server.database import db
 
 tempates = Jinja2Templates('templates')
-
-PASSWORD = environ.get("MONGO_ROOT_PASSWORD", "password")
-
-client = MongoClient(host="novara-mongo", port=27017, username="root", password=PASSWORD)
-db = client.get_database("db")
 
 view_router = APIRouter()
 

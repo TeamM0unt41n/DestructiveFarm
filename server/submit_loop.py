@@ -5,17 +5,9 @@ import random
 import time
 from collections import defaultdict
 
-from server import app, database
 from server.reloader import config
 from server.models import Flag, Flag_Status, SubmitResult
-from os import environ
-from pymongo import MongoClient
-
-
-PASSWORD = environ.get("MONGO_ROOT_PASSWORD", "password")
-
-client = MongoClient(host="novara-mongo", port=27017, username="root", password=PASSWORD)
-db = client.get_database("db")
+from server.database import db
 
 def get_fair_share(groups, limit):
     if not groups:
@@ -56,12 +48,12 @@ def submit_flags(flags):
         return list(module.submit_flags(flags, config))
     except Exception as e:
         message = '{}: {}'.format(type(e).__name__, str(e))
-        app.logger.exception('Exception on submitting flags')
+        print('Exception on submitting flags')
         return [SubmitResult(item.flag, Flag_Status.QUEUED, message) for item in flags]
 
 
 def run_loop():
-    app.logger.info('Starting submit loop')
+    print('Starting submit loop')
     
     while True:
         submit_start_time = time.time()
@@ -90,7 +82,7 @@ def run_loop():
             # Get fair share of flags, respecting the limit defined in config
             flags = get_fair_share(grouped_flags.values(), config.SUBMIT_FLAG_LIMIT)
 
-            app.logger.debug('Submitting %s flags (out of %s in queue)', len(flags), len(queued_flags))
+            print('Submitting %s flags (out of %s in queue)', len(flags), len(queued_flags))
 
             # Submit flags and get results
             results = submit_flags(flags)
