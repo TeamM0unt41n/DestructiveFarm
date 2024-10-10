@@ -2,26 +2,25 @@ import re
 import time
 
 from datetime import datetime
-from pymongo import DESCENDING
+from pymongo import DESCENDING, UpdateOne
 from typing import Annotated, Optional
 
-from fastapi import APIRouter, Request, Form
+from fastapi import APIRouter, Request, Form, HTTPException
 from fastapi.responses import JSONResponse
 from fastapi.templating import Jinja2Templates
 
 from server.models import Flag_Status
-from server.reloader import config
+from server.config import config
 from server.database import db
 
 tempates = Jinja2Templates('templates')
 
 view_router = APIRouter()
 
-@view_router.template_filter('timestamp_to_datetime')
 def timestamp_to_datetime(s):
     return datetime.fromtimestamp(s)
 
-@view_router.route('/')
+@view_router.get('/')
 def index(request:Request):
     distinct_values = {}
 
@@ -38,7 +37,8 @@ def index(request:Request):
                                               'server_tz_name':server_tz_name})
 
 
-FORM_DATETIME_FORMAT = '%Y-%m-%d %H:%M'
+FORM_DATETIME_FORMAT_MIN = '%Y-%m-%d %H:%M'
+FORM_DATETIME_FORMAT_SEC = '%Y-%m-%d %H:%M:%S'
 
 @view_router.post('/ui/show_flags')
 async def show_flags(
@@ -71,23 +71,29 @@ async def show_flags(
 
     # Time-based filtering
     for param in ['time-since', 'time-until']:
-        value = request.form[param].strip()
+        value = form_data[param].strip()
         if value:
-            timestamp = round(datetime.strptime(value, FORM_DATETIME_FORMAT).timestamp())
+            try:
+                timestamp = round(datetime.strptime(value, FORM_DATETIME_FORMAT_MIN).timestamp())
+            except ValueError as e:
+                try:
+                    timestamp = round(datetime.strptime(value, FORM_DATETIME_FORMAT_SEC).timestamp())
+                except ValueError:
+                    raise HTTPException(400, f'invalide time: {e.args}')
             if param == 'time-since':
                 query['time'] = {'$gte': timestamp}
             elif param == 'time-until':
                 query['time'] = {'$lte': timestamp}
 
     # Pagination
-    page_number = int(request.form['page-number'])
+    page_number = int(form_data['page-number'])
     if page_number < 1:
         raise ValueError('Invalid page-number')
 
     skip = flags_per_page * (page_number - 1)
     
     # Retrieve flags with pagination and sorting by time (descending)
-    flags = list(db.flags.find(query).sort('time', DESCENDING).skip(skip).limit(flags_per_page))
+    flags = list(db.flags.find(query, {'_id':False}).sort('time', DESCENDING).skip(skip).limit(flags_per_page))
 
     # Get total count for pagination
     total_count = db.flags.count_documents(query)
@@ -99,7 +105,7 @@ async def show_flags(
     })
 
 
-@view_router.route('/ui/post_flags_manual', methods=['POST'])
+@view_router.post('/ui/post_flags_manual')
 def post_flags_manual(text:Annotated[str, Form()]):    
     # Extract flags from the provided text
     flags = re.findall(config.FLAG_FORMAT, text)
@@ -110,16 +116,17 @@ def post_flags_manual(text:Annotated[str, Form()]):
         'sploit': 'Manual',
         'team': '*',
         'time': cur_time,
-        'status': Flag_Status.QUEUED.name
+        'status': Flag_Status.QUEUED.name,
+        'checksystem_response':None
     } for item in flags]
 
     # Use bulk operations to insert flags, ignoring duplicates
     operations = [
-        {'updateOne': {
-            'filter': {'flag': row['flag']},
-            'update': {'$setOnInsert': row},
-            'upsert': True
-        }} for row in rows
+        UpdateOne(
+            {'flag': row['flag']},
+            {'$setOnInsert': row},
+            upsert=True
+        ) for row in rows
     ]
 
     if operations:

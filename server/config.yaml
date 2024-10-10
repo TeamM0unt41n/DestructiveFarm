@@ -1,15 +1,16 @@
 TEAMS:
-- test
-- test3
-- test4
+  team1: localhost:8000
+  team2: localhost:8000
 
-FLAG_FORMAT': '[A-Z0-9]{31}='
+FLAG_FORMAT: '[A-Z0-9]{31}='
+
+USE_ADVANCED_STRATEGIES: false
 
 # This configures how and where to submit flags.
 # The protocol must be a module in protocols/ directory.
 SYSTEM_TOKEN: '12ad1db9850dc371b36f9f105661f47c'
 SYSTEM_PROTOCOL: 'ecsc24_http'
-SYSTEM_URL: 'http://10.10.0.1:8080/flags'
+SYSTEM_URL: 'http://localhost:8000/submit/'
 SYSTEM_PORT: 8080
 
 # SYSTEM_PROTOCOL: 'ructf_http'
@@ -31,9 +32,7 @@ SUBMIT_FLAG_LIMIT: 50
 SUBMIT_PERIOD: 5
 FLAG_LIFETIME: 300
 
-# Password for the web interface. You can use it with any login.
-# This value will be excluded from the config before sending it to farm clients.
-SERVER_PASSWORD: '1234'
+STRATEGY_ENDPOINT: 'api:8000/strategy/teams'
 
 # Use authorization for API requests
 ENABLE_API_AUTH: True

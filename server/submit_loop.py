@@ -4,8 +4,9 @@ import importlib
 import random
 import time
 from collections import defaultdict
+from pymongo import UpdateOne
 
-from server.reloader import config
+from server.config import config
 from server.models import Flag, Flag_Status, SubmitResult
 from server.database import db
 
@@ -47,6 +48,7 @@ def submit_flags(flags):
     try:
         return list(module.submit_flags(flags, config))
     except Exception as e:
+        raise e
         message = '{}: {}'.format(type(e).__name__, str(e))
         print('Exception on submitting flags')
         return [SubmitResult(item.flag, Flag_Status.QUEUED, message) for item in flags]
@@ -68,7 +70,7 @@ def run_loop():
         )
 
         # Query all flags where status is 'QUEUED'
-        queued_flags = list(db['flags'].find({"status": Flag_Status.QUEUED.name}))
+        queued_flags = list(db['flags'].find({"status": Flag_Status.QUEUED.name}, {'_id': False}))
 
         # Convert MongoDB documents to Flag objects (assuming a Flag class exists)
         queued_flags = [Flag(**item) for item in queued_flags]
@@ -91,17 +93,15 @@ def run_loop():
             bulk_updates = []
             for result in results:
                 bulk_updates.append(
-                    {
-                        "update_one": {
-                            "filter": {"flag": result.flag},
-                            "update": {
-                                "$set": {
-                                    "status": result.status.name,
-                                    "checksystem_response": result.checksystem_response
-                                }
+                    UpdateOne(
+                        filter={"flag": result.flag},
+                        update= {
+                            "$set": {
+                                "status": result.status.name,
+                                "checksystem_response": result.checksystem_response
                             }
                         }
-                    }
+                    )
                 )
 
             # Execute bulk update in MongoDB

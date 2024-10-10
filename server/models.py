@@ -14,6 +14,8 @@ class Config_Model(BaseModel):
     TEAMS: dict[str, str]
     FLAG_FORMAT: str
     SYSTEM_TOKEN: str
+    USE_ADVANCED_STRATEGIES: bool
+    STRATEGY_ENDPOINT: str
     SYSTEM_PROTOCOL: Optional[str] = None
     SYSTEM_URL: Optional[str] = None
     SYSTEM_PORT: Optional[int] = None
@@ -24,7 +26,6 @@ class Config_Model(BaseModel):
     SUBMIT_FLAG_LIMIT: int
     SUBMIT_PERIOD: int
     FLAG_LIFETIME: int
-    SERVER_PASSWORD: str
     ENABLE_API_AUTH: bool
     API_TOKEN: str
 

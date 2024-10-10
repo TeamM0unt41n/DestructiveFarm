@@ -15,14 +15,13 @@ class ConfigManager(Config_Model):
 
     def __init__(self):
         super().__init__(**self._load())
-        self.observer_thread = threading.Thread(target=self.watch_for_changes, daemon=True)
-        self.observer_thread.start()
+        threading.Thread(target=self.watch_for_changes, daemon=True).start()
         self.is_initialized = True
 
     def watch_for_changes(self):
         for _ in watch(CONFIG_PATH):
             print('Hot reloading config...')
-            self._load()
+            self.raw_config = self._load()
 
     def _load(self):
         with open(CONFIG_PATH, 'r') as config_file:

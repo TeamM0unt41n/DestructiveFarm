@@ -6,4 +6,4 @@ from server import app
 
 threading.Thread(target=submit_loop.run_loop, daemon=True).start()
 
-uvicorn.run(app)
+uvicorn.run(app, port=8080)

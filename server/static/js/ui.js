@@ -78,7 +78,7 @@ function showFlags() {
     $('.search-results').hide();
     $('.query-status').html('Loading...').show();
 
-    $.post('/farm/ui/show_flags', $('#show-flags-form').serialize())
+    $.post('ui/show_flags', $('#show-flags-form').serialize())
         .done(function (response) {
             $('.search-results tbody').html(generateFlagTableRows(response.rows));
 
@@ -108,7 +108,7 @@ function postFlagsManual() {
         return;
     queryInProgress = true;
 
-    $.post('/farm/ui/post_flags_manual', $('#post-flags-manual-form').serialize())
+    $.post('ui/post_flags_manual', $('#post-flags-manual-form').serialize())
         .done(function () {
             var sploitSelect = $('#sploit-select');
             if ($('#sploit-manual-option').empty())

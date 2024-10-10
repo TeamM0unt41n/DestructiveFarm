@@ -1,8 +1,7 @@
-from functools import wraps
 from fastapi import Request, HTTPException
 from fastapi.responses import Response
 
-from server.reloader import config
+from server.config import config
 
 def authenticate():
     return Response(
