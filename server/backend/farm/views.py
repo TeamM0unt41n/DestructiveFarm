@@ -9,11 +9,11 @@ from fastapi import APIRouter, Request, Form, HTTPException
 from fastapi.responses import JSONResponse
 from fastapi.templating import Jinja2Templates
 
-from server.models import Flag_Status
-from server.config import config
-from server.database import db
+from farm.models import Flag_Status
+from farm.config import config
+from farm.database import db
 
-tempates = Jinja2Templates('templates')
+tempates = Jinja2Templates('farm/templates')
 
 view_router = APIRouter()
 

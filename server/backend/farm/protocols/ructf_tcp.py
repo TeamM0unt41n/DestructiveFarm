@@ -1,9 +1,8 @@
-# Based on https://gist.github.com/xmikasax/90a0ce5736a4274e46b9958f836951e7
-
 import socket
+import logging
+logger = logging.getLogger(__name__)
 
-from server import app
-from server.models import Flag_Status, SubmitResult
+from farm.models import Flag_Status, SubmitResult
 
 
 RESPONSES = {
@@ -11,9 +10,14 @@ RESPONSES = {
                         'no such flag'],
     Flag_Status.ACCEPTED: ['accepted', 'congrat'],
     Flag_Status.REJECTED: ['bad', 'wrong', 'expired', 'unknown', 'your own',
-                          'too old', 'not in database', 'already submitted', 'invalid flag',
-                          'self', 'invalid', 'already_submitted', 'team_not_found', 'too_old', 'stolen'],
+                          'too old', 'not in database', 'already submitted', 'invalid flag'],
 }
+# The RuCTF checksystem adds a signature to all correct flags. It returns
+# "invalid flag" verdict if the signature is invalid and "no such flag" verdict if
+# the signature is correct but the flag was not found in the checksystem database.
+#
+# The latter situation happens if a checker puts the flag to the service before putting it
+# to the checksystem database. We should resent the flag later in this case.
 
 READ_TIMEOUT = 5
 APPEND_TIMEOUT = 0.05
@@ -44,13 +48,8 @@ def submit_flags(flags, config):
                                     READ_TIMEOUT)
 
     greeting = recvall(sock)
-    if b'Welcome' not in greeting:
+    if b'Enter your flags' not in greeting:
         raise Exception('Checksystem does not greet us: {}'.format(greeting))
-
-    sock.sendall(config.TEAM_TOKEN.encode() + b'\n')
-    invite = recvall(sock)
-    if b'enter your flags' not in invite:
-        raise Exception('Team token seems to be invalid: {}'.format(invite))
 
     unknown_responses = set()
     for item in flags:
@@ -69,7 +68,7 @@ def submit_flags(flags, config):
             found_status = Flag_Status.QUEUED
             if response not in unknown_responses:
                 unknown_responses.add(response)
-                app.logger.warning('Unknown checksystem response (flag will be resent): %s', response)
+                logger.warning('Unknown checksystem response (flag will be resent): %s', response)
 
         yield SubmitResult(item.flag, found_status, response)
 

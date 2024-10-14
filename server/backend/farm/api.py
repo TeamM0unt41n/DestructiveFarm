@@ -3,11 +3,11 @@ import requests
 from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
 
-from server import auth
-from server.config import config
-from server.spam import is_spam_flag
-from server.models import Flag_Status, Flag_Model, Config_Model
-from server.database import db
+from farm import auth
+from farm.config import config
+from farm.spam import is_spam_flag
+from farm.models import Flag_Status, Flag_Model, Config_Model
+from farm.database import db
 
 from json import JSONDecodeError
 

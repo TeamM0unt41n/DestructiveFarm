@@ -2,7 +2,7 @@ import socket
 import logging
 import time
 
-from models import Flag_Status, SubmitResult, Config_Model, Flag_Model
+from farm.models import Flag_Status, SubmitResult, Config_Model, Flag_Model
 
 logger = logging.getLogger(__name__)
 

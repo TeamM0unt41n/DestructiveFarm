@@ -1,8 +1,9 @@
 import requests
 
-from server import app
-from server.models import Flag_Status, SubmitResult
+from farm.models import Flag_Status, SubmitResult
 
+import logging
+logger = logging.getLogger(__name__)
 
 RESPONSES = {
     Flag_Status.QUEUED: ['timeout', 'game not started', 'try again later', 'game over', 'is not up',
@@ -41,6 +42,6 @@ def submit_flags(flags, config):
             found_status = Flag_Status.QUEUED
             if response not in unknown_responses:
                 unknown_responses.add(response)
-                app.logger.warning('Unknown checksystem response (flag will be resent): %s', response)
+                logger.warning('Unknown checksystem response (flag will be resent): %s', response)
 
         yield SubmitResult(item['flag'], found_status, response)

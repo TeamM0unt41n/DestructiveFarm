@@ -7,7 +7,7 @@ import pytz
 import requests
 import logging
 
-from server.models import Flag_Status, SubmitResult, Config_Model, Flag_Model
+from farm.models import Flag_Status, SubmitResult, Config_Model, Flag_Model
 
 logger = logging.getLogger(__name__)
 

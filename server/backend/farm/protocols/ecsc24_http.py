@@ -1,7 +1,7 @@
 import requests
 
-from server import app
-from server.models import Flag_Status, SubmitResult
+from backend import farm
+from farm.models import Flag_Status, SubmitResult
 
 
 RESPONSES = {
@@ -39,6 +39,6 @@ def submit_flags(flags, config):
                 found_status = Flag_Status.QUEUED
                 if response not in unknown_responses:
                     unknown_responses.add(response)
-                    app.logger.warning('Unknown checksystem response (flag will be resent): %s', response)
+                    farm.logger.warning('Unknown checksystem response (flag will be resent): %s', response)
 
             yield SubmitResult(item['flag'], found_status, response)

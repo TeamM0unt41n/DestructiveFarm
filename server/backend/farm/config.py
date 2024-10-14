@@ -3,7 +3,7 @@ import threading
 import yaml
 from watchfiles import watch
 from typing import Union
-from server.models import Config_Model
+from farm.models import Config_Model
 
 if "CONFIG" in os.environ:
     CONFIG_PATH = os.environ["CONFIG"]

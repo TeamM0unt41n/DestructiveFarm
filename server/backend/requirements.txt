@@ -1,0 +1,7 @@
+fastapi==0.115.0
+fastapi-cli==0.0.5
+pymongo==4.10.1
+celery==5.4.0
+requests==2.32.3
+jinja2
+python-multipart==0.0.12
