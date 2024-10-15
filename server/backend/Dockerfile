@@ -12,4 +12,4 @@ RUN pip3 install -r requirements.txt
 
 COPY ./farm/ /app/farm/
 
-CMD ["fastapi", "run", "farm", "--root-path", "/"]
+CMD ["fastapi", "run", "farm", "--root-path", ""]

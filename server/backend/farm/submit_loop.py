@@ -9,7 +9,7 @@ from pymongo import UpdateOne
 from farm.config import config
 from farm.models import Flag, Flag_Status, SubmitResult
 from farm.database import db
-from celery import shared_task
+from fastapi_utilities import repeat_every
 
 def get_fair_share(groups, limit):
     if not groups:
@@ -54,7 +54,7 @@ def submit_flags(flags):
         print('Exception on submitting flags')
         return [SubmitResult(item.flag, Flag_Status.QUEUED, message) for item in flags]
 
-@shared_task
+@repeat_every(seconds=config.SUBMIT_PERIOD)
 def submit():
     print('trying to submit flags...')
     submit_start_time = time.time()

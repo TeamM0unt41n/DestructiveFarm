@@ -3,8 +3,13 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from farm.api import client_router
 from farm.views import view_router
+from farm.submit_loop import submit
 
-app = FastAPI()
+async def lifespan(app:FastAPI):
+    await submit()
+    yield
+
+app = FastAPI(lifespan=lifespan)
 
 app.add_middleware(CORSMiddleware)
 

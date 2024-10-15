@@ -9,18 +9,6 @@ services:
     networks:
       - farm
 
-  celery:
-    build: 
-      context: .
-      dockerfile: celery/Dockerfile
-    environment:
-      - MONGO_ROOT_PASSWORD=password
-      - BROKER_URL=amqp://celery_user:celery_password@rabbitmq//
-    networks:
-      - farm
-    depends_on:
-      - rabbitmq
-
   mongodb:
     image: mongo:latest
     environment:
@@ -30,16 +18,6 @@ services:
       - 27017:27017
     networks:
       - farm
-
-  rabbitmq:
-    image: rabbitmq:latest
-    networks:
-      - farm
-    ports:
-      - 5672:5672 
-    environment:
-      RABBITMQ_DEFAULT_USER: celery_user
-      RABBITMQ_DEFAULT_PASS: celery_password
   
 networks:
   farm:
