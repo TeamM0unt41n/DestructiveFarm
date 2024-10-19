@@ -9,7 +9,7 @@ from pymongo import UpdateOne
 from farm.config import config
 from farm.models import Flag, Flag_Status, SubmitResult
 from farm.database import db
-from fastapi_utilities import repeat_every
+from fastapi_utils.tasks import repeat_every
 
 def get_fair_share(groups, limit):
     if not groups:
